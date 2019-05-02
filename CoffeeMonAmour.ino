@@ -7,6 +7,11 @@
 #define DEFAULT_SSID "XXX"
 #define DEFAULT_PASSWORD "XXX"
 
+/* HMI pins e.g. LEDs. */
+#define WIFI_STATUS_PIN (2)
+#define DATA_STATUS_PIN (15)
+#define ERROR_PIN       (0)
+
 /* Remote configuration. */
 struct RemoteConfig
 {
@@ -34,7 +39,12 @@ void setup()
   /* Init. serial at 115200 bps. */
   Serial.begin(115200);
   while (!Serial);
-  
+
+  /* Pins setup. */
+  pinMode(WIFI_STATUS_PIN, OUTPUT);
+  pinMode(DATA_STATUS_PIN, OUTPUT);
+  pinMode(ERROR_PIN, OUTPUT);
+
   /* Workers setup. */
   remote.setup();
   reader.setup();
@@ -46,31 +56,51 @@ void loop()
 {
   if (remote.isConnected())
   {
+    /* Flickering to know if the µC is still running. */
+    digitalWrite(WIFI_STATUS_PIN, (millis() % 1000) > 500);
+
     if (reader.readUID())
     {
+      digitalWrite(DATA_STATUS_PIN, HIGH);
+      digitalWrite(WIFI_STATUS_PIN, HIGH);
+
       String urlBase = remote.getBaseUrl();
       String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
-      
+
       String url = urlBase + urlParameters;
       if (remote.sendData(url))
       {
         log("[DATA] ok");
+        /* Makes the LED flicker to show that data have been transmitted. */
+        for (int i = 0; i < 6; ++i)
+        {
+          digitalWrite(DATA_STATUS_PIN, i%2);
+          delay(300);
+        }
       }
       else
       {
         log("[DATA] error");
+        digitalWrite(ERROR_PIN, HIGH);
+        delay(1000);
       }
     }
     else
     {
       /* Do nothing: no new card detected. */
+      digitalWrite(DATA_STATUS_PIN, LOW);
     }
-    
   }
   else
   {
     /* Do nothing: not connected to remote. */
+    digitalWrite(WIFI_STATUS_PIN, LOW);
   }
+
+  /* Switch off all HMI outputs. */
+  digitalWrite(WIFI_STATUS_PIN, LOW);
+  digitalWrite(DATA_STATUS_PIN, LOW);
+  digitalWrite(ERROR_PIN, LOW);
 }
 
 /* Print out debug info. */
