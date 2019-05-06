@@ -21,6 +21,7 @@ https://cdn.shopify.com/s/files/1/1509/1638/files/RFID_RC522_Set_mit_Reader_Chip
 * SPI [ESP32]
 * WiFiClientSecure [ESP32]
 * MFRC522 [https://github.com/miguelbalboa/rfid]
+* SSD1306 [https://github.com/ThingPulse/esp8266-oled-ssd1306]
 
 ## Credits for pulling things together
 * "ESP32 and RFID-RC522 module example" [http://www.esp32learning.com/code/esp32-and-rfid-rc522-module-example.php]

@@ -1,5 +1,6 @@
 #include "Remote.hpp"
 #include "Reader.hpp"
+#include "Display.hpp"
 
 /* Print debug data. */
 #define DEBUG_ON (true)
@@ -29,10 +30,20 @@ struct ReaderConfig
   unsigned long readPeriod_ms = 2000;
 } readerCfg;
 
+/* Display configuration. */
+struct DisplayConfig
+{
+  byte address =  0x3C;
+  byte sda =      4;
+  byte sdc =      5;
+} displayCfg;
+
 /* Remote server to communicate with. */
 Remote remote(remoteCfg.ssid, remoteCfg.password, remoteCfg.serverUrl, remoteCfg.googleKey, &log);
 /* RFID Card reader. */
 Reader reader(readerCfg.chipSelectPin, readerCfg.resetPowerDownPin, readerCfg.readPeriod_ms, &log);
+/* Display. */
+Display display(displayCfg.address, displayCfg.sda, displayCfg.sdc);
 
 void setup()
 {
@@ -48,6 +59,7 @@ void setup()
   /* Workers setup. */
   remote.setup();
   reader.setup();
+  display.setup();
 
   log("[SETUP] done");
 }
@@ -63,6 +75,7 @@ void loop()
     {
       digitalWrite(DATA_STATUS_PIN, HIGH);
       digitalWrite(WIFI_STATUS_PIN, HIGH);
+      display.write("Card detected, transmitting.");
 
       String urlBase = remote.getBaseUrl();
       String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
@@ -71,6 +84,7 @@ void loop()
       if (remote.sendData(url))
       {
         log("[DATA] ok");
+        display.write("Data transmitted.");
         /* Makes the LED flicker to show that data have been transmitted. */
         for (int i = 0; i < 6; ++i)
         {
@@ -81,6 +95,7 @@ void loop()
       else
       {
         log("[DATA] error");
+        display.write("Error.");
         digitalWrite(ERROR_PIN, HIGH);
         delay(1000);
       }
@@ -89,12 +104,14 @@ void loop()
     {
       /* Do nothing: no new card detected. */
       digitalWrite(DATA_STATUS_PIN, LOW);
+      display.write("Waiting for new card...");
     }
   }
   else
   {
     /* Do nothing: not connected to remote. */
     digitalWrite(WIFI_STATUS_PIN, LOW);
+    display.write("Not connected...");
   }
 
   /* Switch off all HMI outputs. */
