@@ -2,6 +2,26 @@
 #include "Reader.hpp"
 #include "Display.hpp"
 
+/*
+  Default pins layout.
+  +---------+-------+------+-----+
+  | NodeMCU | RC522 | OLED | LED |
+  +---------+-------+------+-----+
+  | GPIO-21 |  SDA  |      |     |
+  | GPIO-18 |  SCK  |      |     |
+  | GPIO-23 |  MOSI |      |     |
+  | GPIO-19 |  MISO |      |     |
+  | GPIO-22 |  RST  |      |     |
+  | GPIO-5  |       | SCK  |     |
+  | GPIO-4  |       | SDA  |     |
+  | GPIO-0  |       |      |  R  |
+  | GPIO-15 |       |      |  G  |
+  | GPIO-2  |       |      |  B  |
+  +---------+-------+------+-----+
+  The RC522 and the OLED display are powered with 3.3V.
+  The LEDs are powered with 5.0V.
+*/
+
 /* Print debug data. */
 #define DEBUG_ON (true)
 
