@@ -16,6 +16,8 @@ NodeMCU + RFID reader + MIFARE Classic card --(WiFi)--> Google Script --> Google
 https://cdn.shopify.com/s/files/1/1509/1638/files/RFID_RC522_Set_mit_Reader_Chip_und_Card_13_56MHz_Datenblatt.pdf?2098853292011892896, https://www.nxp.com/docs/en/data-sheet/MFRC522.pdf]
 * 1x MIFARE Classic card [https://www.nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf]
 * 3x LEDs (red, green and blue)
+* 1x OLED display with SSD1306 driver (e.g. GM009605)
+* 1x micro-USB cable (check your wires if you get a Brown Out Reset (BOR))
 
 ## Libraries
 * SPI [ESP32]
