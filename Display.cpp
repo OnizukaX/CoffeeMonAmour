@@ -11,7 +11,7 @@ Display::Display(byte f_address,
 void Display::setup()
 {
   m_display.init();
-  m_display.flipScreenVertically();
+  //m_display.flipScreenVertically();
   m_display.setFont(ArialMT_Plain_10);
 }
 
