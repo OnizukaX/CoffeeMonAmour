@@ -102,7 +102,6 @@ void loop()
     if (reader.readUID())
     {
       digitalWrite(DATA_STATUS_PIN, HIGH);
-      digitalWrite(WIFI_STATUS_PIN, HIGH);
       hmi.write("Card detected, transmitting.");
 
       String urlBase = remote.getBaseUrl();
@@ -147,7 +146,7 @@ void loop()
   else
   {
     /* Do nothing: not connected to remote. */
-    digitalWrite(WIFI_STATUS_PIN, LOW);
+    digitalWrite(ERROR_PIN, HIGH);
     hmi.write("Not connected...");
   }
 
