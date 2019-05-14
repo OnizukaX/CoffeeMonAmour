@@ -54,9 +54,14 @@ struct ReaderConfig
 /* Hmi configuration. */
 struct HmiConfig
 {
-  byte address =  0x3C;
-  byte sda =      4;
-  byte sdc =      5;
+  byte address              = 0x3C;
+  byte sdaPin               = 4;
+  byte sdcPin               = 5;
+  uint8_t touchButtonPin    = T7;
+  uint8_t touchButtonThresh = 30;
+  uint8_t wifiStatusPin     = 25;
+  uint8_t dataStatusPin     = 26;
+  uint8_t errorStatusPin    = 33;
 } hmiCfg;
 
 /* Remote server to communicate with. */
@@ -64,7 +69,7 @@ Remote remote(remoteCfg.ssid, remoteCfg.password, remoteCfg.serverUrl, remoteCfg
 /* RFID Card reader. */
 Reader reader(readerCfg.chipSelectPin, readerCfg.resetPowerDownPin, readerCfg.readPeriod_ms, &log);
 /* Hmi. */
-Hmi hmi(hmiCfg.address, hmiCfg.sda, hmiCfg.sdc);
+Hmi hmi(hmiCfg.address, hmiCfg.sdaPin, hmiCfg.sdcPin, hmiCfg.wifiStatusPin, hmiCfg.dataStatusPin, hmiCfg.errorStatusPin);
 
 void setup()
 {
@@ -72,14 +77,9 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
-  /* Pins setup. */
-  pinMode(WIFI_STATUS_PIN, OUTPUT);
-  pinMode(DATA_STATUS_PIN, OUTPUT);
-  pinMode(ERROR_PIN, OUTPUT);
-
   /* Workers setup. */
   hmi.setup();
-  hmi.configureTouchButton();
+  hmi.configureTouchButton(hmiCfg.touchButtonPin, hmiCfg.touchButtonThresh);
   hmi.write("HMI ok");
   reader.setup();
   hmi.write("Reader ok");
@@ -96,12 +96,12 @@ void loop()
 {
   if (remote.isConnected())
   {
-    /* Flickering to know if the µC is still running. */
-    digitalWrite(WIFI_STATUS_PIN, (millis() % 1000) > 500);
+    /* Blinking to know if the µC is still running. */
+    hmi.setWifiStatusLight((millis() % 1000) > 500);
 
-    if (reader.readUID())
+    if (reader.readUID()) /* Card read. */
     {
-      digitalWrite(DATA_STATUS_PIN, HIGH);
+      hmi.setDataStatusLight(true);
       hmi.write("Card detected, transmitting.");
 
       String urlBase = remote.getBaseUrl();
@@ -112,10 +112,10 @@ void loop()
       {
         log("[DATA] ok");
         hmi.write("Data transmitted.");
-        /* Makes the LED flicker to show that data have been transmitted. */
+        /* Makes the LED blink to show that data have been transmitted. */
         for (int i = 0; i < 6; ++i)
         {
-          digitalWrite(DATA_STATUS_PIN, i%2);
+          hmi.setDataStatusLight(i% 2);
           delay(300);
         }
       }
@@ -123,14 +123,14 @@ void loop()
       {
         log("[DATA] error");
         hmi.write("Error.");
-        digitalWrite(ERROR_PIN, HIGH);
+        hmi.setErrorStatusLight(true);
         delay(1000);
       }
     }
     else
     {
       /* No new card detected. */
-      digitalWrite(DATA_STATUS_PIN, LOW);
+      hmi.setDataStatusLight(false);
 
       /* Button status. */
       if (hmi.isButtonPressed())
@@ -146,14 +146,14 @@ void loop()
   else
   {
     /* Do nothing: not connected to remote. */
-    digitalWrite(ERROR_PIN, HIGH);
+    hmi.setErrorStatusLight(true);
     hmi.write("Not connected...");
   }
 
   /* Switch off all HMI outputs. */
-  digitalWrite(WIFI_STATUS_PIN, LOW);
-  digitalWrite(DATA_STATUS_PIN, LOW);
-  digitalWrite(ERROR_PIN, LOW);
+  hmi.setWifiStatusLight(false);
+  hmi.setDataStatusLight(false);
+  hmi.setErrorStatusLight(false);
 }
 
 /* Print out debug info. */
