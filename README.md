@@ -18,6 +18,7 @@ https://cdn.shopify.com/s/files/1/1509/1638/files/RFID_RC522_Set_mit_Reader_Chip
 * 3x LEDs (red, green and blue)
 * 1x OLED display with SSD1306 driver (e.g. GM009605)
 * 1x micro-USB cable (check your wires if you get a Brown Out Reset (BOR))
+* 1x screw for the capacitive touch button (combined with a ESP32 capacity touch pad)
 
 ## Libraries
 * SPI [ESP32]

@@ -4,20 +4,21 @@
 
 /*
   Default pins layout.
-  +---------+-------+------+-----+
-  | NodeMCU | RC522 | OLED | LED |
-  +---------+-------+------+-----+
-  | GPIO-21 |  SDA  |      |     |
-  | GPIO-18 |  SCK  |      |     |
-  | GPIO-23 |  MOSI |      |     |
-  | GPIO-19 |  MISO |      |     |
-  | GPIO-22 |  RST  |      |     |
-  | GPIO-5  |       | SCK  |     |
-  | GPIO-4  |       | SDA  |     |
-  | GPIO-0  |       |      |  R  |
-  | GPIO-15 |       |      |  G  |
-  | GPIO-2  |       |      |  B  |
-  +---------+-------+------+-----+
+  +---------+-------+------+-----+--------+
+  | NodeMCU | RC522 | OLED | LED | Button |
+  +---------+-------+------+-----+--------|
+  | GPIO-21 |  SDA  |      |     |        |
+  | GPIO-18 |  SCK  |      |     |        |
+  | GPIO-23 |  MOSI |      |     |        |
+  | GPIO-19 |  MISO |      |     |        |
+  | GPIO-22 |  RST  |      |     |        |
+  | GPIO-5  |       | SCK  |     |        |
+  | GPIO-4  |       | SDA  |     |        |
+  | GPIO-0  |       |      |  R  |        |
+  | GPIO-15 |       |      |  G  |        |
+  | GPIO-2  |       |      |  B  |        |
+  | GPIO-27 |       |      |     |  Touch |
+  +---------+-------+------+-----+--------+
   The RC522 and the OLED display are powered with 3.3V.
   The LEDs are powered with 5.0V.
 */
@@ -80,6 +81,7 @@ void setup()
   remote.setup();
   reader.setup();
   display.setup();
+  display.configureTouchButton();
 
   log("[SETUP] done");
 }
@@ -122,9 +124,18 @@ void loop()
     }
     else
     {
-      /* Do nothing: no new card detected. */
+      /* No new card detected. */
       digitalWrite(DATA_STATUS_PIN, LOW);
-      display.write("Waiting for new card...");
+
+      /* Button status. */
+      if (display.isButtonPressed())
+      {
+        display.write("Button is pressed");
+      }
+      else
+      {
+        display.write("Waiting for new card...");
+      }
     }
   }
   else
