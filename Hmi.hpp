@@ -3,12 +3,19 @@
 class Hmi
 {
 public:
-  Hmi(byte f_address,
-      byte f_sda,
-      byte f_sdc,
-      uint8_t f_wifiStatusPin,
-      uint8_t f_dataStatusPin,
-      uint8_t f_errorStatusPin);
+  struct HmiConfig
+  {
+    byte address;
+    byte sdaPin;
+    byte sdcPin;
+    uint8_t touchButtonPin;
+    uint8_t touchButtonThresh;
+    uint8_t wifiStatusPin;
+    uint8_t dataStatusPin;
+    uint8_t errorStatusPin;
+  };
+
+  Hmi(const HmiConfig& cfg);
 
   virtual ~Hmi() {}
 
@@ -16,9 +23,7 @@ public:
   void setup();
   /* Output text. */
   void write(String msg);
-  /* Capacitive touch button. Thresh=30 took empirically. */
-  void configureTouchButton(uint8_t f_pin = T7,
-                            uint16_t f_touchButtonThresh = 30);
+  /* Capacitive touch button. */
   bool isButtonPressed() const;
   /* Status. */
   void setWifiStatusLight(bool f_on) const { digitalWrite(m_wifiStatusPin, f_on); }

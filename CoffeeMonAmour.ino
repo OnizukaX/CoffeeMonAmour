@@ -35,41 +35,38 @@
 #define ERROR_PIN       (33)
 
 /* Remote configuration. */
-struct RemoteConfig
-{
-  String ssid =       DEFAULT_SSID;
-  String password =   DEFAULT_PASSWORD;
-  String serverUrl =  "script.google.com";
-  String googleKey =  "XXX";
-} remoteCfg;
+Remote::RemoteConfig remoteCfg = {
+  .ssid       = DEFAULT_SSID,
+  .password   = DEFAULT_PASSWORD,
+  .serverUrl  = "script.google.com",
+  .googleKey  = "XXX"
+};
 
 /* Reader configuration. */
-struct ReaderConfig
-{
-  byte chipSelectPin =          21;
-  byte resetPowerDownPin =      22;
-  unsigned long readPeriod_ms = 2000;
-} readerCfg;
+Reader::ReaderConfig readerCfg = {
+  .chipSelectPin      = 21,
+  .resetPowerDownPin  = 22,
+  .readPeriod_ms      = 2000
+};
 
 /* Hmi configuration. */
-struct HmiConfig
-{
-  byte address              = 0x3C;
-  byte sdaPin               = 4;
-  byte sdcPin               = 5;
-  uint8_t touchButtonPin    = T7;
-  uint8_t touchButtonThresh = 30;
-  uint8_t wifiStatusPin     = 25;
-  uint8_t dataStatusPin     = 26;
-  uint8_t errorStatusPin    = 33;
-} hmiCfg;
+Hmi::HmiConfig hmiCfg = {
+  .address           = 0x3C,
+  .sdaPin            = 4,
+  .sdcPin            = 5,
+  .touchButtonPin    = T7,
+  .touchButtonThresh = 30, /* Thresh=30 took empirically. */
+  .wifiStatusPin     = 25,
+  .dataStatusPin     = 26,
+  .errorStatusPin    = 33
+};
 
 /* Remote server to communicate with. */
-Remote remote(remoteCfg.ssid, remoteCfg.password, remoteCfg.serverUrl, remoteCfg.googleKey, &log);
+Remote remote(remoteCfg, &log);
 /* RFID Card reader. */
-Reader reader(readerCfg.chipSelectPin, readerCfg.resetPowerDownPin, readerCfg.readPeriod_ms, &log);
+Reader reader(readerCfg, &log);
 /* Hmi. */
-Hmi hmi(hmiCfg.address, hmiCfg.sdaPin, hmiCfg.sdcPin, hmiCfg.wifiStatusPin, hmiCfg.dataStatusPin, hmiCfg.errorStatusPin);
+Hmi hmi(hmiCfg);
 
 void setup()
 {
@@ -79,7 +76,6 @@ void setup()
 
   /* Workers setup. */
   hmi.setup();
-  hmi.configureTouchButton(hmiCfg.touchButtonPin, hmiCfg.touchButtonThresh);
   hmi.write("HMI ok");
   reader.setup();
   hmi.write("Reader ok");

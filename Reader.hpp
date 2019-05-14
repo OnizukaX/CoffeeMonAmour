@@ -4,9 +4,14 @@
 class Reader
 {
 public:
-  Reader(byte f_chipSelectPin = 21,
-         byte f_resetPowerDownPin = 22,
-         unsigned long f_readPeriod_ms = 2000,
+  struct ReaderConfig
+  {
+    byte chipSelectPin;
+    byte resetPowerDownPin;
+    unsigned long readPeriod_ms;
+  };
+
+  Reader(const ReaderConfig& cfg,
          void (*f_logFunPtr_p)(String) = nullptr,
          String f_tag = "[READER]");
 

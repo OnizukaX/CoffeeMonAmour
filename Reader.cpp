@@ -5,15 +5,13 @@
 
 #include "Reader.hpp"
 
-Reader::Reader(byte f_chipSelectPin,
-               byte f_resetPowerDownPin,
-               unsigned long f_readPeriod_ms,
+Reader::Reader(const ReaderConfig& cfg,
                void (*f_logFunPtr_p)(String),
                String f_tag) :
-  m_mfrc522(f_chipSelectPin, f_resetPowerDownPin),
+  m_mfrc522(cfg.chipSelectPin, cfg.resetPowerDownPin),
   m_mifare_key(),
   m_uid(),
-  m_readPeriod_ms(f_readPeriod_ms),
+  m_readPeriod_ms(cfg.readPeriod_ms),
   m_readPrevTstamp_ms(millis()),
   m_logFunPtr_p(f_logFunPtr_p),
   m_tag(f_tag)

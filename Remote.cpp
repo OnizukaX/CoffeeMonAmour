@@ -4,16 +4,13 @@
 
 #define TIMEOUT_MS (1500)
 
-Remote::Remote(String f_ssid,
-               String f_password,
-               String f_serverUrl,
-               String f_googleKey,
+Remote::Remote(const RemoteConfig& cfg,
                void (*f_logFunPtr_p)(String),
                String f_tag) :
-  m_ssid(f_ssid),
-  m_password(f_password),
-  m_serverUrl(f_serverUrl),
-  m_googleKey(f_googleKey),
+  m_ssid(cfg.ssid),
+  m_password(cfg.password),
+  m_serverUrl(cfg.serverUrl),
+  m_googleKey(cfg.googleKey),
   m_logFunPtr_p(f_logFunPtr_p),
   m_tag(f_tag),
   m_client(WiFiClientSecure()) {}

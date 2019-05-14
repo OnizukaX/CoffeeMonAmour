@@ -3,10 +3,15 @@
 class Remote : public WiFiSTAClass
 {
 public:
-  Remote(String f_ssid,
-         String f_password,
-         String f_serverUrl,
-         String f_googleKey,
+  struct RemoteConfig
+  {
+    String ssid;
+    String password;
+    String serverUrl;
+    String googleKey;
+  };
+
+  Remote(const RemoteConfig& cfg,
          void (*f_logFunPtr_p)(String) = nullptr,
          String f_tag = "[REMOTE]");
 
