@@ -14,9 +14,9 @@
   | GPIO-22 |  RST  |      |     |        |
   | GPIO-5  |       | SCK  |     |        |
   | GPIO-4  |       | SDA  |     |        |
-  | GPIO-0  |       |      |  R  |        |
-  | GPIO-15 |       |      |  G  |        |
-  | GPIO-2  |       |      |  B  |        |
+  | GPIO-33 |       |      |  R  |        |
+  | GPIO-26 |       |      |  G  |        |
+  | GPIO-25 |       |      |  B  |        |
   | GPIO-27 |       |      |     |  Touch |
   +---------+-------+------+-----+--------+
   The RC522 and the OLED display are powered with 3.3V.
@@ -30,9 +30,9 @@
 #define DEFAULT_PASSWORD "XXX"
 
 /* HMI pins e.g. LEDs. */
-#define WIFI_STATUS_PIN (2)
-#define DATA_STATUS_PIN (15)
-#define ERROR_PIN       (0)
+#define WIFI_STATUS_PIN (25)
+#define DATA_STATUS_PIN (26)
+#define ERROR_PIN       (33)
 
 /* Remote configuration. */
 struct RemoteConfig
