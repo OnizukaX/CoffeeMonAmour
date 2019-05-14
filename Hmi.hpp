@@ -1,13 +1,13 @@
 #include <SSD1306Wire.h>
 
-class Display
+class Hmi
 {
 public:
-  Display(byte f_address = 0x3C,
-          byte f_sda = 4,
-          byte f_sdc = 5);
+  Hmi(byte f_address = 0x3C,
+      byte f_sda = 4,
+      byte f_sdc = 5);
 
-  virtual ~Display() {}
+  virtual ~Hmi() {}
 
   /* Setup. */
   void setup();
