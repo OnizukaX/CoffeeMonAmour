@@ -13,7 +13,7 @@ public:
   virtual ~Remote() {}
 
   /* Setup. */
-  void setup();
+  bool setup(uint8_t cxAttempts = 10);
   /* Send data to remote. */
   bool sendData(String f_url);
   /* Get URL without parameters. */

@@ -78,10 +78,16 @@ void setup()
   pinMode(ERROR_PIN, OUTPUT);
 
   /* Workers setup. */
-  remote.setup();
-  reader.setup();
   hmi.setup();
   hmi.configureTouchButton();
+  hmi.write("HMI ok");
+  reader.setup();
+  hmi.write("Reader ok");
+  delay(500);
+  hmi.write("Connecting...");
+  bool initRemote = remote.setup();
+  hmi.write((initRemote) ? "Remote ok" : "Not connected");
+  delay(500);
 
   log("[SETUP] done");
 }

@@ -18,18 +18,30 @@ Remote::Remote(String f_ssid,
   m_tag(f_tag),
   m_client(WiFiClientSecure()) {}
 
-void Remote::setup()
+bool Remote::setup(uint8_t cxAttempts)
 {
   WiFi.begin(m_ssid.c_str(), m_password.c_str());
   WiFi.setAutoReconnect(true);
+
   log("Waiting for connection");
-  while (!WiFi.isConnected())
+  while (!WiFi.isConnected() && (0 != cxAttempts))
   {
     delay(500);
     log(".");
+    --cxAttempts;
   }
-  log("IP Addresse: " + WiFi.localIP().toString());
-  log("setup done");
+
+  if (WiFi.isConnected())
+  {
+    log("IP Addresse: " + WiFi.localIP().toString());
+    log("setup done");
+  }
+  else
+  {
+    log("Not connected with remote.");
+  }
+
+  return WiFi.isConnected();
 }
 
 /* Send data to remote. */
