@@ -29,11 +29,6 @@
 #define DEFAULT_SSID "XXX"
 #define DEFAULT_PASSWORD "XXX"
 
-/* HMI pins e.g. LEDs. */
-#define WIFI_STATUS_PIN (25)
-#define DATA_STATUS_PIN (26)
-#define ERROR_PIN       (33)
-
 /* Remote configuration. */
 Remote::RemoteConfig remoteCfg = {
   .ssid       = DEFAULT_SSID,
