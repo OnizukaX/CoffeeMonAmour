@@ -42,7 +42,7 @@ bool Remote::setup(uint8_t cxAttempts)
 }
 
 /* Send data to remote. */
-bool Remote::sendData(String f_url)
+bool Remote::sendData(String f_url, String& f_scriptResponse)
 {
   bool success;
   String movedURL;
@@ -139,12 +139,8 @@ bool Remote::sendData(String f_url)
               line = m_client.readStringUntil('\r');
               log(line);
               line.trim();
-              line.toLowerCase();
-              if (line.endsWith("</html>"))
-              {
-                log("Reached end of document.");
-                break;
-              }
+              /* Saving the script response for evtl. future use. */
+              f_scriptResponse = line;
             }
           }
           log("--- response ---");

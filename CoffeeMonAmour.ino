@@ -120,10 +120,11 @@ void loop()
       String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
 
       String url = urlBase + urlParameters;
-      if (remote.sendData(url))
+      String scriptResponse;
+      if (remote.sendData(url, scriptResponse))
       {
-        log("[DATA] ok");
-        hmi.write("Data transmitted.");
+        log("[DATA] data transmitted");
+        hmi.write(scriptResponse);
         /* Makes the LED blink to show that data have been transmitted. */
         for (int i = 0; i < 6; ++i)
         {
