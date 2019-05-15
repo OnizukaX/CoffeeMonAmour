@@ -74,17 +74,32 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
-  /* Workers setup. */
+  /*
+  * Workers setup.
+  */
+  /* HMI */
   hmi.setup();
-  hmi.write("HMI ok");
+  String displayLogs("HMI setup...");
+  hmi.write(displayLogs);
+  /* Switching on all LEDs. */
+  hmi.setWifiStatusLight(true);
+  hmi.setDataStatusLight(true);
+  hmi.setErrorStatusLight(true);
+  hmi.write(displayLogs += "ok\n");
+  /* Reader */
+  hmi.write(displayLogs += "RFID reader setup...");
   reader.setup();
-  hmi.write("Reader ok");
-  delay(500);
-  hmi.write("Connecting...");
+  hmi.write(displayLogs += "ok\n");
+  /* Remote */
+  hmi.write(displayLogs += "Connecting to WiFi...");
   bool initRemote = remote.setup();
-  hmi.write((initRemote) ? "Remote ok" : "Not connected");
+  hmi.write(displayLogs += (initRemote) ? "ok" : "error");
   delay(500);
 
+  /* Switching off all LEDs. */
+  hmi.setWifiStatusLight(false);
+  hmi.setDataStatusLight(false);
+  hmi.setErrorStatusLight(false);
   log("[SETUP] done");
 }
 
@@ -98,6 +113,7 @@ void loop()
     if (reader.readUID()) /* Card read. */
     {
       hmi.setDataStatusLight(true);
+      hmi.setWifiStatusLight(false);
       hmi.write("Card detected, transmitting.");
 
       String urlBase = remote.getBaseUrl();

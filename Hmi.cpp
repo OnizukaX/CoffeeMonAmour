@@ -21,10 +21,6 @@ void Hmi::setup()
   pinMode(m_wifiStatusPin, OUTPUT);
   pinMode(m_dataStatusPin, OUTPUT);
   pinMode(m_errorStatusPin, OUTPUT);
-
-  setWifiStatusLight(false);
-  setDataStatusLight(false);
-  setErrorStatusLight(false);
 }
 
 void Hmi::write(String msg)
