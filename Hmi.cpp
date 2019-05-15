@@ -9,7 +9,8 @@ Hmi::Hmi(const HmiConfig& cfg) :
   m_dataStatusPin(cfg.dataStatusPin),
   m_errorStatusPin(cfg.errorStatusPin),
   m_touchButtonPin(cfg.touchButtonPin),
-  m_touchButtonThresh(cfg.touchButtonThresh) {}
+  m_touchButtonThresh(cfg.touchButtonThresh),
+  m_balanceEnquiry_ms(0) {}
 
 void Hmi::setup()
 {
@@ -40,4 +41,13 @@ bool Hmi::isButtonPressed() const
     sumValues += touchRead(m_touchButtonPin);
   }
   return (static_cast<uint16_t>(sumValues / NB_MEAS) <= m_touchButtonThresh);
+}
+
+bool Hmi::isBalanceEnquiryActive(unsigned long& f_timeLeft_ms) const
+{
+  static unsigned long enquiryTimeout_ms = 5000;
+  f_timeLeft_ms = constrain((0 == m_balanceEnquiry_ms) ? 0 : enquiryTimeout_ms - abs(millis() - m_balanceEnquiry_ms),
+                            0,
+                            enquiryTimeout_ms);
+  return (0 != m_balanceEnquiry_ms) && (abs(millis() - m_balanceEnquiry_ms) < enquiryTimeout_ms);
 }

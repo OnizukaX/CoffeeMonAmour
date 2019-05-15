@@ -25,6 +25,9 @@ public:
   void write(String text, int16_t x = 5, int16_t y = 5);
   /* Capacitive touch button. */
   bool isButtonPressed() const;
+  /* Balance enquiry. */
+  void setBalanceEnquiry(unsigned long time_ms) { m_balanceEnquiry_ms = time_ms; }
+  bool isBalanceEnquiryActive(unsigned long& f_timeLeft_ms) const;
   /* Status. */
   void setWifiStatusLight(bool f_on) const { digitalWrite(m_wifiStatusPin, f_on); }
   void setDataStatusLight(bool f_on) const { digitalWrite(m_dataStatusPin, f_on); }
@@ -40,4 +43,6 @@ private:
   uint8_t m_touchButtonPin;
   /* Threshold from which we consider the capacitive touch button to be active. */
   uint16_t m_touchButtonThresh;
+  /* Last time the balance enquiry was requested. */
+  unsigned long m_balanceEnquiry_ms;
 };

@@ -107,6 +107,7 @@ void loop()
 {
   if (remote.isConnected())
   {
+    unsigned long enquiryTimeLeft_ms;
     /* Blinking to know if the µC is still running. */
     hmi.setWifiStatusLight((millis() % 1000) > 500);
 
@@ -114,10 +115,18 @@ void loop()
     {
       hmi.setDataStatusLight(true);
       hmi.setWifiStatusLight(false);
-      hmi.write("Card detected, transmitting.");
 
       String urlBase = remote.getBaseUrl();
       String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
+      if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
+      {
+        urlParameters += "&Balance=1";
+        hmi.write("Retrieving balance...");
+      }
+      else
+      {
+        hmi.write("Putting a tick...");
+      }
 
       String url = urlBase + urlParameters;
       String scriptResponse;
@@ -148,11 +157,17 @@ void loop()
       /* Button status. */
       if (hmi.isButtonPressed())
       {
-        hmi.write("Button is pressed");
+        hmi.setBalanceEnquiry(millis());
+      }
+      else if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
+      {
+        hmi.write("Balance enquiry...\n" +
+                  String((enquiryTimeLeft_ms / 1000)) + "s left for swipping");
       }
       else
       {
-        hmi.write("Waiting for new card...");
+        hmi.setBalanceEnquiry(0);
+        hmi.write("Waiting for card...");
       }
     }
   }
