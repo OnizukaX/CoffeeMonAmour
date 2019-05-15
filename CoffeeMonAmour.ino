@@ -24,7 +24,7 @@
 */
 
 /* Print debug data. */
-#define DEBUG_ON (true)
+#define DEBUG_ON (false)
 
 #define DEFAULT_SSID "XXX"
 #define DEFAULT_PASSWORD "XXX"
