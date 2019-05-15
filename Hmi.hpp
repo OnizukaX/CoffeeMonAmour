@@ -22,7 +22,7 @@ public:
   /* Setup. */
   void setup();
   /* Output text. */
-  void write(String msg);
+  void write(String text, int16_t x = 5, int16_t y = 5);
   /* Capacitive touch button. */
   bool isButtonPressed() const;
   /* Status. */

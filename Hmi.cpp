@@ -23,10 +23,10 @@ void Hmi::setup()
   pinMode(m_errorStatusPin, OUTPUT);
 }
 
-void Hmi::write(String msg)
+void Hmi::write(String text, int16_t x, int16_t y)
 {
   m_display.clear();
-  m_display.drawString(5, 5, msg);
+  m_display.drawString(x, y, text);
   m_display.display();
 }
 
