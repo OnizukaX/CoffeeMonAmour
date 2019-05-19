@@ -159,8 +159,10 @@ void loop()
       }
       else if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
       {
-        hmi.write("Balance enquiry...\n" +
-                  String((enquiryTimeLeft_ms / 1000)) + "s left for swipping");
+        hmi.clear();
+        hmi.writeSmall("Balance enquiry...", false);
+        hmi.drawProgressBar((enquiryTimeLeft_ms * 100) / hmi.getEnquiryTimeout());
+        hmi.display();
       }
       else
       {

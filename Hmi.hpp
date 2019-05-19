@@ -35,8 +35,10 @@ public:
   /* Capacitive touch button. */
   bool isButtonPressed() const;
   /* Balance enquiry. */
-  void setBalanceEnquiry(unsigned long time_ms) { m_balanceEnquiry_ms = time_ms; }
+  unsigned long getEnquiryTimeout() { return m_enquiryTimeout_ms; }
+  void setBalanceEnquiry(const unsigned long f_time_ms) { m_balanceEnquiry_ms = f_time_ms; }
   bool isBalanceEnquiryActive(unsigned long& f_timeLeft_ms) const;
+  void drawProgressBar(const uint8_t f_progress, const uint8_t f_margin_x = 5, const uint8_t f_margin_y = 25);
   /* Status. */
   void setWifiStatusLight(bool f_on) const { digitalWrite(m_wifiStatusPin, f_on); }
   void setDataStatusLight(bool f_on) const { digitalWrite(m_dataStatusPin, f_on); }
@@ -54,4 +56,5 @@ private:
   uint16_t m_touchButtonThresh;
   /* Last time the balance enquiry was requested. */
   unsigned long m_balanceEnquiry_ms;
+  unsigned long m_enquiryTimeout_ms;
 };

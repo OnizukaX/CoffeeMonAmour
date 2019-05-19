@@ -10,7 +10,8 @@ Hmi::Hmi(const HmiConfig& cfg) :
   m_errorStatusPin(cfg.errorStatusPin),
   m_touchButtonPin(cfg.touchButtonPin),
   m_touchButtonThresh(cfg.touchButtonThresh),
-  m_balanceEnquiry_ms(0) {}
+  m_balanceEnquiry_ms(0),
+  m_enquiryTimeout_ms(5000) {}
 
 void Hmi::setup()
 {
@@ -47,9 +48,17 @@ bool Hmi::isButtonPressed() const
 
 bool Hmi::isBalanceEnquiryActive(unsigned long& f_timeLeft_ms) const
 {
-  static unsigned long enquiryTimeout_ms = 5000;
-  f_timeLeft_ms = constrain((0 == m_balanceEnquiry_ms) ? 0 : enquiryTimeout_ms - abs(millis() - m_balanceEnquiry_ms),
+  f_timeLeft_ms = constrain((0 == m_balanceEnquiry_ms) ? 0 : static_cast<long long>(m_enquiryTimeout_ms - abs(millis() - m_balanceEnquiry_ms)),
                             0,
-                            enquiryTimeout_ms);
-  return (0 != m_balanceEnquiry_ms) && (abs(millis() - m_balanceEnquiry_ms) < enquiryTimeout_ms);
+                            m_enquiryTimeout_ms);
+  return (0 != m_balanceEnquiry_ms) && (abs(millis() - m_balanceEnquiry_ms) < m_enquiryTimeout_ms);
+}
+
+void Hmi::drawProgressBar(uint8_t f_progress, uint8_t f_margin_x, uint8_t f_margin_y)
+{
+  m_display.drawProgressBar(f_margin_x,
+                            f_margin_y,
+                            m_display.getWidth() - (2 * f_margin_x),
+                            m_display.getHeight() - (2 * f_margin_y),
+                            f_progress);
 }
