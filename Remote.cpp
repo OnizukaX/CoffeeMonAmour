@@ -42,7 +42,7 @@ bool Remote::setup(uint8_t cxAttempts)
 }
 
 /* Send data to remote. */
-bool Remote::sendData(String f_url, String& f_scriptResponse)
+bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation_p)())
 {
   bool success;
   String movedURL;
@@ -50,6 +50,9 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
   unsigned long start_ms;
 
   log("Connecting to " + m_serverUrl);
+  
+  /* Update animation. */
+  f_animation_p();
 
   if (m_client.connect(m_serverUrl.c_str(), 443))
   {
@@ -77,6 +80,9 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
       {
         movedURL = line.substring(line.indexOf(":") + 2 ) ; /* Retain new URL. */
       }
+
+      /* Update animation. */
+      f_animation_p();
     }
     log("--- headers ---");
 
@@ -90,6 +96,9 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
         line = m_client.readStringUntil('\r');
         log(line);
       }
+
+      /* Update animation. */
+      f_animation_p();
     }
     log("--- response ---");
     m_client.stop();
@@ -126,6 +135,9 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
             {
               break;
             }
+
+            /* Update animation. */
+            f_animation_p();
           }
           log("--- headers ---");
 
@@ -141,7 +153,10 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
               line.trim();
               /* Saving the script response for evtl. future use. */
               f_scriptResponse = line;
-            }
+            } 
+                  
+            /* Update animation. */
+            f_animation_p();
           }
           log("--- response ---");
           m_client.stop();

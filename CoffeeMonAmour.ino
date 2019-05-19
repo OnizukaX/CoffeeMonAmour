@@ -116,28 +116,33 @@ void loop()
 
       String urlBase = remote.getBaseUrl();
       String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
+      void (*animation_p)() = nullptr;
       if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
       {
         urlParameters += "&Balance=1";
-        hmi.writeBig("Retrieving\nbalance...");
+        animation_p = &animationBalance_wrapper;
       }
       else
       {
-        hmi.writeBig("Ticking...");
+        //hmi.writeBig("Ticking...");
+        hmi.fillCoffeeCup();
+        animation_p = &animationCoffee_wrapper;
       }
 
       String url = urlBase + urlParameters;
       String scriptResponse;
-      if (remote.sendData(url, scriptResponse))
+      if (remote.sendData(url, scriptResponse, animation_p))
       {
         log("[DATA] data transmitted");
         hmi.writeBig(scriptResponse);
+
         /* Makes the LED blink to show that data have been transmitted. */
         for (int i = 0; i < 6; ++i)
         {
           hmi.setDataStatusLight(i% 2);
           delay(300);
         }
+        delay(1000);
       }
       else
       {
@@ -192,10 +197,18 @@ void log(String msg)
   }
 }
 
+/* Wrappers to avoid function-to-member pointers.
+   Reducting the coupling between Remote and Hmi. */
+void animationCoffee_wrapper()
+{
+  hmi.fillCoffeeCup();
+}
+
 void animationBalance_wrapper()
 {
   static const uint16_t speed = 8 * 1000;
   hmi.clear();
+  hmi.writeSmall("Retrieving balance...", false);
   hmi.drawProgressBar((100 * (speed - (millis() % speed))) / speed);
   hmi.display();
 }
