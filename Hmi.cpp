@@ -62,3 +62,31 @@ void Hmi::drawProgressBar(uint8_t f_progress, uint8_t f_margin_x, uint8_t f_marg
                             m_display.getHeight() - (2 * f_margin_y),
                             f_progress);
 }
+
+void Hmi::fillCoffeeCup()
+{
+  static const int16_t cupWidth = 30;
+  static const int16_t cupHeight = 40;
+  static const int16_t x0 = (m_display.getWidth() / 2) - (cupWidth / 2);
+  static const int16_t y0 = (m_display.getHeight() - cupHeight) / 2;
+  static const int16_t handleRadius = 5;
+  static const int16_t pouringSpeed = 8 * 1000;
+
+  m_display.clear();
+
+  /* Cup. */
+  m_display.fillRect(x0, y0, cupWidth, cupHeight);
+  /* Handle. */
+  m_display.drawCircleQuads(x0 + cupWidth - 1, y0 + cupHeight / 2, handleRadius, 0b00001001);
+  m_display.drawCircleQuads(x0 + cupWidth - 1, y0 + cupHeight / 2, handleRadius + 1, 0b00001001);
+  /* Filled coffee. */
+  m_display.setColor(BLACK);
+  m_display.fillRect(x0 + 2, y0, cupWidth - 4, (cupHeight * (pouringSpeed - (millis() % pouringSpeed))) / pouringSpeed);
+  m_display.setColor(WHITE);
+  /* Pouring coffee. */
+  m_display.drawVerticalLine(x0 + (cupWidth / 2), y0 - 10, cupHeight + 10);
+  /* Saucer. */
+  m_display.drawHorizontalLine(x0 - 10, y0 + cupHeight + 1, cupWidth + (2 * 10));
+
+  m_display.display();
+}

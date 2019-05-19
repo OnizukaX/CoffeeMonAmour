@@ -39,6 +39,9 @@ public:
   void setBalanceEnquiry(const unsigned long f_time_ms) { m_balanceEnquiry_ms = f_time_ms; }
   bool isBalanceEnquiryActive(unsigned long& f_timeLeft_ms) const;
   void drawProgressBar(const uint8_t f_progress, const uint8_t f_margin_x = 5, const uint8_t f_margin_y = 25);
+  /* Ticking. */
+  void fillCoffeeCup();
+
   /* Status. */
   void setWifiStatusLight(bool f_on) const { digitalWrite(m_wifiStatusPin, f_on); }
   void setDataStatusLight(bool f_on) const { digitalWrite(m_dataStatusPin, f_on); }
