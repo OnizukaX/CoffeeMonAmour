@@ -191,3 +191,11 @@ void log(String msg)
     /* Do nothing. */
   }
 }
+
+void animationBalance_wrapper()
+{
+  static const uint16_t speed = 8 * 1000;
+  hmi.clear();
+  hmi.drawProgressBar((100 * (speed - (millis() % speed))) / speed);
+  hmi.display();
+}
