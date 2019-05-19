@@ -15,8 +15,9 @@ Hmi::Hmi(const HmiConfig& cfg) :
 void Hmi::setup()
 {
   m_display.init();
+  m_display.clear();
+  m_display.display();
   //m_display.flipScreenVertically();
-  m_display.setFont(ArialMT_Plain_10);
 
   /* LEDs pins setup. */
   pinMode(m_wifiStatusPin, OUTPUT);
@@ -24,11 +25,12 @@ void Hmi::setup()
   pinMode(m_errorStatusPin, OUTPUT);
 }
 
-void Hmi::write(String text, int16_t x, int16_t y)
+void Hmi::write(const String f_text, const bool f_clearNdisplay, const int16_t f_x, const int16_t f_y, const uint8_t& f_fontData)
 {
-  m_display.clear();
-  m_display.drawString(x, y, text);
-  m_display.display();
+  if (f_clearNdisplay) m_display.clear();
+  m_display.setFont(&f_fontData);
+  m_display.drawString(f_x, f_y, f_text);
+  if (f_clearNdisplay) m_display.display();
 }
 
 bool Hmi::isButtonPressed() const

@@ -21,8 +21,17 @@ public:
 
   /* Setup. */
   void setup();
+  /* Display. */
+  void clear() { m_display.clear(); }
+  void display() { m_display.display(); }
   /* Output text. */
-  void write(String text, int16_t x = 5, int16_t y = 5);
+  void write(const String f_text, const bool f_clearNdisplay, const int16_t f_x, const int16_t f_y, const uint8_t& f_fontData);
+  void writeSmall(String f_text, const bool f_clearNdisplay = true, const int16_t f_x = 5, const int16_t f_y = 5)
+  { write(f_text, f_clearNdisplay, f_x, f_y, *ArialMT_Plain_10); }
+  void writeMedium(const String f_text, const bool f_clearNdisplay = true, const int16_t f_x = 5, const int16_t f_y = 8)
+  { write(f_text, f_clearNdisplay, f_x, f_y, *ArialMT_Plain_16); }
+  void writeBig(const String f_text, const bool f_clearNdisplay = true, const int16_t f_x = 5, const int16_t f_y = 12)
+  { write(f_text, f_clearNdisplay, f_x, f_y, *ArialMT_Plain_24); }
   /* Capacitive touch button. */
   bool isButtonPressed() const;
   /* Balance enquiry. */

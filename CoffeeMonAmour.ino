@@ -75,21 +75,22 @@ void setup()
   /* HMI */
   hmi.setup();
   String displayLogs("HMI setup...");
-  hmi.write(displayLogs);
+  hmi.writeSmall(displayLogs);
   /* Switching on all LEDs. */
   hmi.setWifiStatusLight(true);
   hmi.setDataStatusLight(true);
   hmi.setErrorStatusLight(true);
-  hmi.write(displayLogs += "ok\n");
+  hmi.writeSmall(displayLogs += "ok\n");
   /* Reader */
-  hmi.write(displayLogs += "RFID reader setup...");
+  hmi.writeSmall(displayLogs += "RFID reader setup...");
   reader.setup();
-  hmi.write(displayLogs += "ok\n");
+  hmi.writeSmall(displayLogs += "ok\n");
   /* Remote */
-  hmi.write(displayLogs += "Connecting to WiFi...");
+  hmi.writeSmall(displayLogs += "Connecting to WiFi...");
   bool initRemote = remote.setup();
-  hmi.write(displayLogs += (initRemote) ? "ok" : "error");
+  hmi.writeSmall(displayLogs += (initRemote) ? "ok" : "error");
   delay(500);
+  hmi.clear();
 
   /* Switching off all LEDs. */
   hmi.setWifiStatusLight(false);
@@ -116,11 +117,11 @@ void loop()
       if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
       {
         urlParameters += "&Balance=1";
-        hmi.write("Retrieving balance...");
+        hmi.writeBig("Retrieving\nbalance...");
       }
       else
       {
-        hmi.write("Putting a tick...");
+        hmi.writeBig("Ticking...");
       }
 
       String url = urlBase + urlParameters;
@@ -128,7 +129,7 @@ void loop()
       if (remote.sendData(url, scriptResponse))
       {
         log("[DATA] data transmitted");
-        hmi.write(scriptResponse);
+        hmi.writeBig(scriptResponse);
         /* Makes the LED blink to show that data have been transmitted. */
         for (int i = 0; i < 6; ++i)
         {
@@ -139,7 +140,7 @@ void loop()
       else
       {
         log("[DATA] error");
-        hmi.write("Error.");
+        hmi.writeBig("Error!");
         hmi.setErrorStatusLight(true);
         delay(1000);
       }
@@ -162,7 +163,7 @@ void loop()
       else
       {
         hmi.setBalanceEnquiry(0);
-        hmi.write("Waiting for card...");
+        hmi.writeBig("Swipe card");
       }
     }
   }
@@ -170,7 +171,7 @@ void loop()
   {
     /* Do nothing: not connected to remote. */
     hmi.setErrorStatusLight(true);
-    hmi.write("Not connected...");
+    hmi.writeBig("WiFi issue!");
   }
 
   /* Switch off all HMI outputs. */
