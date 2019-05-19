@@ -20,7 +20,7 @@
   | GPIO-27 |       |      |     |  Touch |
   +---------+-------+------+-----+--------+
   The RC522 and the OLED display are powered with 3.3V.
-  The LEDs are powered with 5.0V.
+  The LEDs@20Ma are powered with 3.3V and each of them is in series with a 100Ohm resistors.
 */
 
 /* Print debug data. */
@@ -106,6 +106,8 @@ void loop()
     unsigned long enquiryTimeLeft_ms;
     /* Blinking to know if the µC is still running. */
     hmi.setWifiStatusLight((millis() % 1000) > 500);
+    hmi.setDataStatusLight(false);
+    hmi.setErrorStatusLight(false);
 
     if (reader.readUID()) /* Card read. */
     {
@@ -173,11 +175,6 @@ void loop()
     hmi.setErrorStatusLight(true);
     hmi.writeBig("WiFi issue!");
   }
-
-  /* Switch off all HMI outputs. */
-  hmi.setWifiStatusLight(false);
-  hmi.setDataStatusLight(false);
-  hmi.setErrorStatusLight(false);
 }
 
 /* Print out debug info. */
