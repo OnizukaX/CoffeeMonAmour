@@ -42,7 +42,7 @@ bool Remote::setup(uint8_t cxAttempts)
 }
 
 /* Send data to remote. */
-bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation_p)())
+bool Remote::sendData(String f_url, String& f_scriptResponse)
 {
   bool success;
   String movedURL;
@@ -50,10 +50,8 @@ bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation
   unsigned long start_ms;
 
   log("Connecting to " + m_serverUrl);
+  log("Accessing: " + f_url);
   
-  /* Update animation. */
-  f_animation_p();
-
   if (m_client.connect(m_serverUrl.c_str(), 443))
   {
     log("Connected.");
@@ -80,9 +78,6 @@ bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation
       {
         movedURL = line.substring(line.indexOf(":") + 2 ) ; /* Retain new URL. */
       }
-
-      /* Update animation. */
-      f_animation_p();
     }
     log("--- headers ---");
 
@@ -96,9 +91,6 @@ bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation
         line = m_client.readStringUntil('\r');
         log(line);
       }
-
-      /* Update animation. */
-      f_animation_p();
     }
     log("--- response ---");
     m_client.stop();
@@ -135,9 +127,6 @@ bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation
             {
               break;
             }
-
-            /* Update animation. */
-            f_animation_p();
           }
           log("--- headers ---");
 
@@ -154,9 +143,6 @@ bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation
               /* Saving the script response for evtl. future use. */
               f_scriptResponse = line;
             } 
-                  
-            /* Update animation. */
-            f_animation_p();
           }
           log("--- response ---");
           m_client.stop();
@@ -178,7 +164,7 @@ bool Remote::sendData(String f_url, String& f_scriptResponse, void (*f_animation
   }
   else
   {
-    log("Connection impossible.");
+    log("Connection impossible to: " + f_url);
     success = false;
   }
 

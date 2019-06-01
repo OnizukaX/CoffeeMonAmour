@@ -20,7 +20,7 @@ public:
   /* Setup. */
   bool setup(uint8_t cxAttempts = 10);
   /* Send data to remote. */
-  bool sendData(String f_url, String& f_scriptResponse, void (*f_animation_p)());
+  bool sendData(String f_url, String& f_scriptResponse);
   /* Get URL without parameters. */
   String getBaseUrl() const;
 

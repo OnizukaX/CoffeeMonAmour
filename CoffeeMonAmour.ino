@@ -23,6 +23,13 @@
   The LEDs@20Ma are powered with 3.3V and each of them is in series with a 100Ohm resistors.
 */
 
+/* Determine on which Core Arduino is running. */
+#if CONFIG_FREERTOS_UNICORE
+# define ARDUINO_RUNNING_CORE 0
+#else
+# define ARDUINO_RUNNING_CORE 1
+#endif
+
 /* Print debug data. */
 #define DEBUG_ON (false)
 
@@ -56,6 +63,35 @@ Hmi::HmiConfig hmiCfg = {
   .errorStatusPin    = 33
 };
 
+/* State-machine. */
+enum StateMachine
+{
+  NONE = 0,
+  INIT_START,
+  INIT_FINISHED,
+  WAITING_FOR_CARD,
+  TICKING_COFFEE,
+  BALANCE_ENQUIRED,
+  BALANCE_RETRIEVAL,
+  ENQUIRING_BALANCE,
+  DATA_SUCCESS,
+  DATA_FAILURE,
+  CONNECTION_FAILURE
+};
+
+struct GlobalParams
+{
+  StateMachine state;
+  unsigned long enquiryTimeLeft_ms;
+  String scriptResponse;
+};
+
+GlobalParams gParams = {
+  .state = StateMachine::NONE,
+  .enquiryTimeLeft_ms = 0,
+  .scriptResponse = ""
+};
+
 /* Remote server to communicate with. */
 Remote remote(remoteCfg, &log);
 /* RFID Card reader. */
@@ -69,17 +105,18 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
+  /* Handling Hmi on Arduino Core. Arduino sketch runs on Core1 by default.
+    note: Core1 seems to be the best for Serial I/O.
+    https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/system/freertos.html */
+  xTaskCreatePinnedToCore(hmiWrapper, "hmiWrapper", 10000, NULL, 1, NULL, ARDUINO_RUNNING_CORE);
+
   /*
   * Workers setup.
   */
   /* HMI */
   hmi.setup();
+  gParams.state = INIT_START;
   String displayLogs("HMI setup...");
-  hmi.writeSmall(displayLogs);
-  /* Switching on all LEDs. */
-  hmi.setWifiStatusLight(true);
-  hmi.setDataStatusLight(true);
-  hmi.setErrorStatusLight(true);
   hmi.writeSmall(displayLogs += "ok\n");
   /* Reader */
   hmi.writeSmall(displayLogs += "RFID reader setup...");
@@ -89,13 +126,10 @@ void setup()
   hmi.writeSmall(displayLogs += "Connecting to WiFi...");
   bool initRemote = remote.setup();
   hmi.writeSmall(displayLogs += (initRemote) ? "ok" : "error");
+  gParams.state = INIT_FINISHED;
   delay(500);
   hmi.clear();
 
-  /* Switching off all LEDs. */
-  hmi.setWifiStatusLight(false);
-  hmi.setDataStatusLight(false);
-  hmi.setErrorStatusLight(false);
   log("[SETUP] done");
 }
 
@@ -103,84 +137,62 @@ void loop()
 {
   if (remote.isConnected())
   {
-    unsigned long enquiryTimeLeft_ms;
-    /* Blinking to know if the µC is still running. */
-    hmi.setWifiStatusLight((millis() % 1000) > 500);
-    hmi.setDataStatusLight(false);
-    hmi.setErrorStatusLight(false);
-
     if (reader.readUID()) /* Card read. */
     {
-      hmi.setDataStatusLight(true);
-      hmi.setWifiStatusLight(false);
-
-      String urlBase = remote.getBaseUrl();
       String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
-      void (*animation_p)() = nullptr;
-      if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
+      if (hmi.isBalanceEnquiryActive(gParams.enquiryTimeLeft_ms))
       {
+        gParams.state = BALANCE_RETRIEVAL;
         urlParameters += "&Balance=1";
-        animation_p = &animationBalance_wrapper;
       }
       else
       {
-        //hmi.writeBig("Ticking...");
-        hmi.fillCoffeeCup();
-        animation_p = &animationCoffee_wrapper;
+        gParams.state = TICKING_COFFEE;
       }
 
-      String url = urlBase + urlParameters;
-      String scriptResponse;
-      if (remote.sendData(url, scriptResponse, animation_p))
+      String url = remote.getBaseUrl() + urlParameters;
+      
+      if (remote.sendData(url, gParams.scriptResponse))
       {
-        log("[DATA] data transmitted");
-        hmi.writeBig(scriptResponse);
-
-        /* Makes the LED blink to show that data have been transmitted. */
-        for (int i = 0; i < 6; ++i)
+        if (TICKING_COFFEE == gParams.state)
         {
-          hmi.setDataStatusLight(i% 2);
-          delay(300);
+          // Hard-coding the server reply: sometimes, the reply does not have the expected format.
+          gParams.scriptResponse = "OK";
         }
-        delay(1000);
+
+        gParams.state = DATA_SUCCESS;
+        log("[DATA] data transmitted");
       }
       else
       {
+        gParams.state = DATA_FAILURE;
         log("[DATA] error");
-        hmi.writeBig("Error!");
-        hmi.setErrorStatusLight(true);
-        delay(1000);
       }
     }
     else
     {
-      /* No new card detected. */
-      hmi.setDataStatusLight(false);
-
       /* Button status. */
       if (hmi.isButtonPressed())
       {
         hmi.setBalanceEnquiry(millis());
+        gParams.state = BALANCE_ENQUIRED;
       }
-      else if (hmi.isBalanceEnquiryActive(enquiryTimeLeft_ms))
+      else if (hmi.isBalanceEnquiryActive(gParams.enquiryTimeLeft_ms))
       {
-        hmi.clear();
-        hmi.writeSmall("Balance enquiry...", false);
-        hmi.drawProgressBar((enquiryTimeLeft_ms * 100) / hmi.getEnquiryTimeout());
-        hmi.display();
+        gParams.state = BALANCE_ENQUIRED;
       }
       else
       {
         hmi.setBalanceEnquiry(0);
-        hmi.writeBig("Swipe card");
+        /* No new card detected. */
+        gParams.state = WAITING_FOR_CARD;
       }
     }
   }
   else
   {
-    /* Do nothing: not connected to remote. */
-    hmi.setErrorStatusLight(true);
-    hmi.writeBig("WiFi issue!");
+    /* Error: not connected to remote. */
+    gParams.state = CONNECTION_FAILURE;
   }
 }
 
@@ -197,18 +209,73 @@ void log(String msg)
   }
 }
 
-/* Wrappers to avoid function-to-member pointers.
-   Reducting the coupling between Remote and Hmi. */
-void animationCoffee_wrapper()
+/* Handle delegated HMI task. */
+void hmiWrapper(void* pvParameters)
 {
-  hmi.fillCoffeeCup();
-}
-
-void animationBalance_wrapper()
-{
-  static const uint16_t speed = 8 * 1000;
-  hmi.clear();
-  hmi.writeSmall("Retrieving balance...", false);
-  hmi.drawProgressBar((100 * (speed - (millis() % speed))) / speed);
-  hmi.display();
+  while (true)
+  {
+    /* Required to avoid Task Watchdog Timer (TWDT) being triggered when loop executes nothing (not yielding).
+      note: disableCoreXWDT() seems not to be a good solution for this. */
+    delay(10);
+    switch (gParams.state)
+    {
+      case NONE:
+        /* Do nothing: HMI not even initialized. */
+        break;
+      case INIT_START: /* Setup method called, HMI must first be initialized. */
+        hmi.setWDEStatusLights(true, true, true);
+        break;
+      case INIT_FINISHED: /* Setup method finished. */
+        hmi.setWDEStatusLights(false, false, false);
+        break;
+      case WAITING_FOR_CARD:
+        /* Blinking to know if the µC is still running. */
+        hmi.setWDEStatusLights((millis() % 1000) > 500, false, false);
+        hmi.writeBig("Swipe card");
+        break;
+      case TICKING_COFFEE: /* Sending data to remote. */
+        hmi.setWDEStatusLights(false, true, false);
+        hmi.fillCoffeeCup();
+        break;
+      case BALANCE_ENQUIRED: /* Button pressed. */
+        hmi.clear();
+        hmi.writeSmall("Balance enquiry...", false);
+        hmi.drawProgressBar((gParams.enquiryTimeLeft_ms * 100) / hmi.getEnquiryTimeout());
+        hmi.display();
+        break;
+      case BALANCE_RETRIEVAL: /* Request being processed. */
+        hmi.setWDEStatusLights(false, true, false);
+        hmi.clear();
+        hmi.writeSmall("Retrieving balance...", false);
+        static const uint16_t speed = 8 * 1000;
+        hmi.drawProgressBar((100 * (speed - (millis() % speed))) / speed);
+        hmi.display();
+        break;
+      case DATA_SUCCESS: /* Data successfully transmitted. */
+        hmi.setWDEStatusLights(false, true, false);
+        hmi.writeBig(gParams.scriptResponse);
+        /* Makes the LED blink to show that data have been transmitted. */
+        for (int i = 0; i < 6; ++i)
+        {
+          hmi.setDataStatusLight(i% 2);
+          delay(300);
+        }
+        delay(1000);
+        break;
+      case DATA_FAILURE:
+        hmi.setWDEStatusLights(false, false, true);
+        hmi.writeBig("Error!");
+        delay(1000);
+        break;
+      case CONNECTION_FAILURE: /* Could either not connect to W-LAN or no internet connection. */
+        hmi.setWDEStatusLights(false, false, true);
+        hmi.writeBig("WiFi issue!");
+        break;
+      default:
+        /* Unexpected -> error. */
+        hmi.setWDEStatusLights(false, false, true);
+        hmi.writeBig("???");
+        break;
+    }
+  }
 }

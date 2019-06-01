@@ -34,6 +34,13 @@ void Hmi::write(const String f_text, const bool f_clearNdisplay, const int16_t f
   if (f_clearNdisplay) m_display.display();
 }
 
+void Hmi::setWDEStatusLights(bool f_wifi, bool f_data, bool f_error) const
+{
+  setWifiStatusLight(f_wifi);
+  setDataStatusLight(f_data);
+  setErrorStatusLight(f_error);
+}
+
 bool Hmi::isButtonPressed() const
 {
   /* Debounce noise measurements. */

@@ -46,6 +46,7 @@ public:
   void setWifiStatusLight(bool f_on) const { digitalWrite(m_wifiStatusPin, f_on); }
   void setDataStatusLight(bool f_on) const { digitalWrite(m_dataStatusPin, f_on); }
   void setErrorStatusLight(bool f_on) const { digitalWrite(m_errorStatusPin, f_on); }
+  void setWDEStatusLights(bool f_wifi, bool f_data, bool f_error) const;
 
 private:
   SSD1306Wire m_display;
