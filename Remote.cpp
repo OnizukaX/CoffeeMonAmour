@@ -5,12 +5,12 @@
 #define TIMEOUT_MS (1500)
 
 Remote::Remote(const RemoteConfig& cfg,
-               void (*f_logFunPtr_p)(String),
-               String f_tag) :
+               void (*f_logFunPtr_p)(const String&),
+               const String f_tag) :
   m_ssid(cfg.ssid),
   m_password(cfg.password),
-  m_serverUrl(cfg.serverUrl),
-  m_googleKey(cfg.googleKey),
+  m_serverRootUrl(cfg.serverRootUrl),
+  m_serverScriptUrl(cfg.serverScriptUrl),
   m_logFunPtr_p(f_logFunPtr_p),
   m_tag(f_tag),
   m_client(WiFiClientSecure()) {}
@@ -42,23 +42,23 @@ bool Remote::setup(uint8_t cxAttempts)
 }
 
 /* Send data to remote. */
-bool Remote::sendData(String f_url, String& f_scriptResponse)
+bool Remote::sendData(const String& f_url, String& f_scriptResponse)
 {
   bool success;
   String movedURL;
   String line;
   unsigned long start_ms;
 
-  log("Connecting to " + m_serverUrl);
+  log("Connecting to " + m_serverRootUrl);
   log("Accessing: " + f_url);
   
-  if (m_client.connect(m_serverUrl.c_str(), 443))
+  if (m_client.connect(m_serverRootUrl.c_str(), 443))
   {
     log("Connected.");
 
     /* Craft a HTTPS request for the remote. */
     m_client.println("GET " + f_url);
-    m_client.println("Host: " + m_serverUrl);
+    m_client.println("Host: " + m_serverRootUrl);
     m_client.println("Connection: close");
     m_client.println();
 
@@ -107,12 +107,12 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
       else
       {
         log("Start redirection...");
-        if (m_client.connect(m_serverUrl.c_str(), 443))
+        if (m_client.connect(m_serverRootUrl.c_str(), 443))
         {
           log("Connected.");
           /* Craft HTTPS request for the Remote. */
           m_client.println("GET " + movedURL);
-          m_client.println("Host: " + m_serverUrl);
+          m_client.println("Host: " + m_serverRootUrl);
           m_client.println("Connection: close");
           m_client.println();
 
@@ -171,14 +171,8 @@ bool Remote::sendData(String f_url, String& f_scriptResponse)
   return success;
 }
 
-/* Get URL without parameters. */
-String Remote::getBaseUrl() const
-{
-  return String("https://script.google.com/macros/s/") + m_googleKey + String("/exec?");
-}
-
 /* Logging function. */
-void Remote::log(String msg) const
+void Remote::log(const String& msg) const
 {
   if (nullptr == m_logFunPtr_p)
   {

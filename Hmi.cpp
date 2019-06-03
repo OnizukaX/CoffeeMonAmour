@@ -26,19 +26,12 @@ void Hmi::setup()
   pinMode(m_errorStatusPin, OUTPUT);
 }
 
-void Hmi::write(const String f_text, const bool f_clearNdisplay, const int16_t f_x, const int16_t f_y, const uint8_t& f_fontData)
+void Hmi::write(const String& f_text, const bool f_clearNdisplay, const int16_t f_x, const int16_t f_y, const uint8_t& f_fontData)
 {
   if (f_clearNdisplay) m_display.clear();
   m_display.setFont(&f_fontData);
   m_display.drawString(f_x, f_y, f_text);
   if (f_clearNdisplay) m_display.display();
-}
-
-void Hmi::setWDEStatusLights(bool f_wifi, bool f_data, bool f_error) const
-{
-  setWifiStatusLight(f_wifi);
-  setDataStatusLight(f_data);
-  setErrorStatusLight(f_error);
 }
 
 bool Hmi::isButtonPressed() const

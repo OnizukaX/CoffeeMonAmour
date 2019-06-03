@@ -30,6 +30,8 @@
 # define ARDUINO_RUNNING_CORE 1
 #endif
 
+#define GOOGLE_KEY "XXX"
+
 /* Print debug data. */
 #define DEBUG_ON (false)
 
@@ -40,8 +42,8 @@
 Remote::RemoteConfig remoteCfg = {
   .ssid       = DEFAULT_SSID,
   .password   = DEFAULT_PASSWORD,
-  .serverUrl  = "script.google.com",
-  .googleKey  = "XXX"
+  .serverRootUrl  = "script.google.com",
+  .serverScriptUrl = String("https://script.google.com/macros/s/") + GOOGLE_KEY + String("/exec?")
 };
 
 /* Reader configuration. */
@@ -150,7 +152,7 @@ void loop()
         gParams.state = TICKING_COFFEE;
       }
 
-      String url = remote.getBaseUrl() + urlParameters;
+      const String url = remote.getScriptUrl() + urlParameters;
       
       if (remote.sendData(url, gParams.scriptResponse))
       {
@@ -197,7 +199,7 @@ void loop()
 }
 
 /* Print out debug info. */
-void log(String msg)
+void log(const String& msg)
 {
   if (DEBUG_ON)
   {

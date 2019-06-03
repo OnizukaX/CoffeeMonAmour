@@ -6,8 +6,8 @@
 #include "Reader.hpp"
 
 Reader::Reader(const ReaderConfig& cfg,
-               void (*f_logFunPtr_p)(String),
-               String f_tag) :
+               void (*f_logFunPtr_p)(const String&),
+               const String f_tag) :
   m_mfrc522(cfg.chipSelectPin, cfg.resetPowerDownPin),
   m_mifare_key(),
   m_uid(),
@@ -94,7 +94,7 @@ bool Reader::readUID()
 }
 
 /* Logging function. */
-void Reader::log(String msg) const
+void Reader::log(const String& msg) const
 {
   if (nullptr == m_logFunPtr_p)
   {
