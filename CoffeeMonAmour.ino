@@ -32,6 +32,10 @@
 
 #define GOOGLE_KEY "XXX"
 
+#define DATA_SUCCESS_BLINK_NB (3U)
+#define DATA_SUCCESS_BLINK_PERIOD_MS (600U)
+#define DATA_ERROR_DISPLAY_MS (2000U)
+
 /* Print debug data. */
 #define DEBUG_ON (false)
 
@@ -86,12 +90,14 @@ struct GlobalParams
   StateMachine state;
   unsigned long enquiryTimeLeft_ms;
   String scriptResponse;
+  bool displayPreemption;
 };
 
 GlobalParams gParams = {
   .state = StateMachine::NONE,
   .enquiryTimeLeft_ms = 0,
-  .scriptResponse = ""
+  .scriptResponse = "",
+  .displayPreemption = false
 };
 
 /* Remote server to communicate with. */
@@ -129,7 +135,6 @@ void setup()
   bool initRemote = remote.setup();
   hmi.writeSmall(displayLogs += (initRemote) ? "ok" : "error");
   gParams.state = INIT_FINISHED;
-  delay(500);
   hmi.clear();
 
   log("[SETUP] done");
@@ -139,55 +144,64 @@ void loop()
 {
   if (remote.isConnected())
   {
-    if (reader.readUID()) /* Card read. */
+    if (gParams.displayPreemption)
     {
-      String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
-      if (hmi.isBalanceEnquiryActive(gParams.enquiryTimeLeft_ms))
-      {
-        gParams.state = BALANCE_RETRIEVAL;
-        urlParameters += "&Balance=1";
-      }
-      else
-      {
-        gParams.state = TICKING_COFFEE;
-      }
-
-      const String url = remote.getScriptUrl() + urlParameters;
-      
-      if (remote.sendData(url, gParams.scriptResponse))
-      {
-        if (TICKING_COFFEE == gParams.state)
-        {
-          // Hard-coding the server reply: sometimes, the reply does not have the expected format.
-          gParams.scriptResponse = "OK";
-        }
-
-        gParams.state = DATA_SUCCESS;
-        log("[DATA] data transmitted");
-      }
-      else
-      {
-        gParams.state = DATA_FAILURE;
-        log("[DATA] error");
-      }
+      /* Do nothing: HMI has the upper hand. */
     }
     else
     {
-      /* Button status. */
-      if (hmi.isButtonPressed())
+      if (reader.readUID()) /* Card read. */
       {
-        hmi.setBalanceEnquiry(millis());
-        gParams.state = BALANCE_ENQUIRED;
-      }
-      else if (hmi.isBalanceEnquiryActive(gParams.enquiryTimeLeft_ms))
-      {
-        gParams.state = BALANCE_ENQUIRED;
+        String urlParameters = String("CoffeeMachineID=1&EmployeeCardID=") + reader.getUID();
+        if (hmi.isBalanceEnquiryActive(gParams.enquiryTimeLeft_ms))
+        {
+          gParams.state = BALANCE_RETRIEVAL;
+          urlParameters += "&Balance=1";
+        }
+        else
+        {
+          gParams.state = TICKING_COFFEE;
+        }
+
+        const String url = remote.getScriptUrl() + urlParameters;
+        
+        if (remote.sendData(url, gParams.scriptResponse))
+        {
+          if (TICKING_COFFEE == gParams.state)
+          {
+            /* Overwritting the server reply. */
+            gParams.scriptResponse = "OK";
+          }
+
+          gParams.state = DATA_SUCCESS;
+          gParams.displayPreemption = true;
+          log("[DATA] data transmitted: " + gParams.scriptResponse);
+        }
+        else
+        {
+          gParams.state = DATA_FAILURE;
+          gParams.displayPreemption = true;
+          log("[DATA] error: " + gParams.scriptResponse);
+        }
       }
       else
       {
-        hmi.setBalanceEnquiry(0);
-        /* No new card detected. */
-        gParams.state = WAITING_FOR_CARD;
+        /* Button status. */
+        if (hmi.isButtonPressed())
+        {
+          hmi.setBalanceEnquiry(millis());
+          gParams.state = BALANCE_ENQUIRED;
+        }
+        else if (hmi.isBalanceEnquiryActive(gParams.enquiryTimeLeft_ms))
+        {
+          gParams.state = BALANCE_ENQUIRED;
+        }
+        else
+        {
+          hmi.setBalanceEnquiry(0);
+          /* No new card detected. */
+          gParams.state = WAITING_FOR_CARD;
+        }
       }
     }
   }
@@ -214,11 +228,19 @@ void log(const String& msg)
 /* Handle delegated HMI task. */
 void hmiWrapper(void* pvParameters)
 {
+  static unsigned long timer_ms = 0;
+
   while (true)
   {
     /* Required to avoid Task Watchdog Timer (TWDT) being triggered when loop executes nothing (not yielding).
       note: disableCoreXWDT() seems not to be a good solution for this. */
     delay(10);
+
+    if ((gParams.displayPreemption) && (timer_ms == 0))
+    {
+      timer_ms = millis();
+    }
+
     switch (gParams.state)
     {
       case NONE:
@@ -254,20 +276,31 @@ void hmiWrapper(void* pvParameters)
         hmi.display();
         break;
       case DATA_SUCCESS: /* Data successfully transmitted. */
-        hmi.setWDEStatusLights(false, true, false);
-        hmi.writeBig(gParams.scriptResponse);
-        /* Makes the LED blink to show that data have been transmitted. */
-        for (int i = 0; i < 6; ++i)
+        if ((millis() - timer_ms) <= (DATA_SUCCESS_BLINK_NB * DATA_SUCCESS_BLINK_PERIOD_MS))
         {
-          hmi.setDataStatusLight(i% 2);
-          delay(300);
+          hmi.writeBig(gParams.scriptResponse);
+          /* Makes the LED blink to show that data have been transmitted. */
+          hmi.setWDEStatusLights(false, ((millis() - timer_ms) / (DATA_SUCCESS_BLINK_PERIOD_MS >> 2)) % 2, false);
         }
-        delay(1000);
+        else
+        {
+          timer_ms = 0;
+          gParams.displayPreemption = false;
+          gParams.state = WAITING_FOR_CARD;
+        }
         break;
       case DATA_FAILURE:
-        hmi.setWDEStatusLights(false, false, true);
-        hmi.writeBig("Error!");
-        delay(1000);
+        if ((millis() - timer_ms) <= DATA_ERROR_DISPLAY_MS)
+        {
+          hmi.setWDEStatusLights(false, false, true);
+          hmi.writeBig("Error!");
+        }
+        else
+        {
+          timer_ms = 0;
+          gParams.displayPreemption = false;
+          gParams.state = WAITING_FOR_CARD;
+        }
         break;
       case CONNECTION_FAILURE: /* Could either not connect to W-LAN or no internet connection. */
         hmi.setWDEStatusLights(false, false, true);

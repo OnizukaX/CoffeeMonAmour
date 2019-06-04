@@ -21,11 +21,15 @@ bool Remote::setup(uint8_t cxAttempts)
   WiFi.setAutoReconnect(true);
 
   log("Waiting for connection");
+  unsigned long start_ms = millis();
   while (!WiFi.isConnected() && (0 != cxAttempts))
   {
-    delay(500);
-    log(".");
-    --cxAttempts;
+    if ((millis() - start_ms) >= 500)
+    {
+      log(".");
+      start_ms = millis();
+      --cxAttempts;
+    }
   }
 
   if (WiFi.isConnected())
